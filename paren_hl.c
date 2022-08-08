@@ -1,36 +1,39 @@
 #include <yed/plugin.h>
 
 void paren_hl_cursor_moved_handler(yed_event *event);
-void paren_hl_line_handler(yed_event *event);
 void paren_hl_buff_mod_handler(yed_event *event);
+void paren_hl_line_handler(yed_event *event);
 
 void paren_hl_find_parens(yed_frame *frame);
 void paren_hl_hl_parens(yed_event *event);
 
+static int dirty;
 static int beg_row;
 static int beg_col;
 static int end_row;
 static int end_col;
 
 int yed_plugin_boot(yed_plugin *self) {
-    yed_event_handler cursor_moved, line;
+    yed_event_handler cursor_moved, buff_mod, line;
 
     YED_PLUG_VERSION_CHECK();
 
     cursor_moved.kind  = EVENT_CURSOR_POST_MOVE;
     cursor_moved.fn    = paren_hl_cursor_moved_handler;
+    buff_mod.kind      = EVENT_BUFFER_POST_MOD;
+    buff_mod.fn        = paren_hl_buff_mod_handler;
     line.kind          = EVENT_LINE_PRE_DRAW;
     line.fn            = paren_hl_line_handler;
 
     yed_plugin_add_event_handler(self, cursor_moved);
     yed_plugin_add_event_handler(self, line);
+    yed_plugin_add_event_handler(self, buff_mod);
 
     return 0;
 }
 
 void paren_hl_cursor_moved_handler(yed_event *event) {
     yed_frame *frame;
-    int        save_beg_row, save_end_row;
 
     frame = event->frame;
 
@@ -40,9 +43,22 @@ void paren_hl_cursor_moved_handler(yed_event *event) {
         return;
     }
 
-    save_beg_row = beg_row;
-    save_end_row = end_row;
+    dirty = 1;
+}
 
+void paren_hl_buff_mod_handler(yed_event *event) {
+    yed_frame *frame;
+
+    frame = event->frame;
+
+    if (!frame
+    ||  frame != ys->active_frame
+    ||  !frame->buffer
+    ||  frame->buffer->kind != BUFF_KIND_FILE) {
+        return;
+    }
+
+    dirty = 1;
     paren_hl_find_parens(event->frame);
 }
 
@@ -58,26 +74,12 @@ void paren_hl_line_handler(yed_event *event) {
         return;
     }
 
-    paren_hl_hl_parens(event);
-}
-
-void paren_hl_buff_mod_handler(yed_event *event) {
-    yed_frame *frame;
-    int        save_beg_row, save_end_row;
-
-    frame = event->frame;
-
-    if (!frame
-    ||  frame != ys->active_frame
-    ||  !frame->buffer
-    ||  frame->buffer->kind != BUFF_KIND_FILE) {
-        return;
+    if (dirty) {
+        paren_hl_find_parens(event->frame);
+        dirty = 0;
     }
 
-    save_beg_row = beg_row;
-    save_end_row = end_row;
-
-    paren_hl_find_parens(event->frame);
+    paren_hl_hl_parens(event);
 }
 
 void paren_hl_find_parens(yed_frame *frame) {
