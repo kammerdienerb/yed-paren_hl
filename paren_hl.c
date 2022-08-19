@@ -98,9 +98,8 @@ void paren_hl_find_parens(yed_frame *frame) {
 
     beg_row = beg_col = end_row = end_col = 0;
 
-    if (!yed_get_var_as_int("paren-hl-max-line-length", &max)) {
-        max = LINE_MAX;
-    }
+    max = LINE_MAX;
+    yed_get_var_as_int("paren-hl-max-line-length", &max);
 
     row           = frame->cursor_line;
     col           = frame->cursor_col;
