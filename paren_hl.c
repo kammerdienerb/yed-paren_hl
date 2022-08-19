@@ -113,7 +113,12 @@ void paren_hl_find_parens(yed_frame *frame) {
     for (; row >= first_vis_row; row -= 1) {
         line = yed_buff_get_line(frame->buffer, row);
 
-        if (line->visual_width == 0 || line->visual_width > max) { continue; }
+        if (line->visual_width == 0) { continue; }
+
+        if (line->visual_width > max) {
+            beg_row = beg_col = end_row = end_col = 0;
+            return;
+        }
 
         if (row == frame->cursor_line) {
             if (col == 1) { continue; }
@@ -151,6 +156,11 @@ done_back:
         line = yed_buff_get_line(frame->buffer, row);
 
         if (line->visual_width == 0) { continue; }
+
+        if (line->visual_width > max) {
+            beg_row = beg_col = end_row = end_col = 0;
+            return;
+        }
 
         if (row != frame->cursor_line) {
             col = 1;
