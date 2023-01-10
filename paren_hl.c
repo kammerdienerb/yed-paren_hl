@@ -193,14 +193,12 @@ void paren_hl_hl_parens(yed_event *event) {
     yed_attrs  atn;
 
     if (beg_row && beg_col && beg_row == event->row) {
-        atn  = yed_active_style_get_associate();
-        attr = array_item(event->frame->line_attrs, beg_col - 1);
-        yed_combine_attrs(attr, &atn);
+        atn = yed_active_style_get_associate();
+        yed_eline_combine_col_attrs(event, beg_col, &atn);
     }
 
     if (end_row && end_col && end_row == event->row) {
-        atn  = yed_active_style_get_associate();
-        attr = array_item(event->frame->line_attrs, end_col - 1);
-        yed_combine_attrs(attr, &atn);
+        atn = yed_active_style_get_associate();
+        yed_eline_combine_col_attrs(event, end_col, &atn);
     }
 }
